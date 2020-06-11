@@ -4,6 +4,8 @@ export interface ChatMessage {
 }
 
 export interface User {
-  id: number;
-  name: string;
+  id: string;
+  username: string;
 }
+
+export type NewUser = Omit<User, 'id'>;
