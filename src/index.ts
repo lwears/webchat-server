@@ -25,13 +25,17 @@ app.get('/', (_req, res) => {
 
 io.on(ChatEvent.CONNECT, (socket) => {
   logger.info(`user ${socket.id} connected`);
+
   socket.on(ChatEvent.NEW_USER, (username: string) => {
     try {
       userService.usernameExists(username);
       const user = userService.addUser(username, socket.id);
       socket.emit(ChatEventClient.LOGIN_SUCCESS, user);
-      socket.broadcast.emit(ChatEventClient.USER_CONNECTED, username);
       logger.info(`${username} - ${socket.id} - Access Granted`);
+      socket.join('chat');
+      socket.to('chat').emit(ChatEventClient.USER_CONNECTED, username);
+      const users = userService.getAllUsers();
+      io.emit(ChatEventClient.UPDATE_USERS, users);
     } catch (error) {
       socket.emit(ChatEventClient.LOGIN_FAILURE, error.message);
       logger.info(`${username} - ${socket.id} - ${error.message}`);
@@ -39,14 +43,33 @@ io.on(ChatEvent.CONNECT, (socket) => {
   });
 
   socket.on(ChatEvent.MESSAGE, (message: string) => {
-    socket.emit('test', 'test');
-    socket.broadcast.emit(ChatEventClient.BROADCAST_MESSAGE, message);
+    socket.to('chat').emit(ChatEventClient.BROADCAST_MESSAGE, message);
     console.log(message);
   });
 
+  socket.on(ChatEvent.LOGOUT, () => {
+    socket.leave('chat');
+    const removedUser = userService.removeUser(socket.id);
+    const systemMessage = {
+      username: 'System',
+      message: `${removedUser.username} Exited Chat`,
+    };
+    io.to('chat').emit(ChatEventClient.USER_LOGOUT, systemMessage);
+    logger.info(`${socket.id} Logged Out`);
+  });
+
   socket.on(ChatEvent.DISCONNECT, () => {
-    socket.broadcast.emit(ChatEventClient.USER_DISCONNECTED, 'User-Left');
-    logger.info('Client disconnected');
+    const user = userService.getUser(socket.id);
+    if (user) {
+      console.log('here', user.username);
+      userService.removeUser(socket.id);
+      const systemMessage = {
+        username: 'System',
+        message: `${user.username} Exited`,
+      };
+      socket.broadcast.emit(ChatEventClient.USER_DISCONNECTED, systemMessage);
+    }
+    logger.info(`${socket.id} disconnected`);
   });
 });
 
