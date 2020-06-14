@@ -1,22 +1,23 @@
 import { User } from '../types';
 
-const users: Array<User> = [
-  { username: 'Liam', id: '1' },
-  { username: 'Billybob', id: '2' },
-  { username: 'Daniel', id: '3' },
-];
+const users: Array<User> = [];
 
-const usernameExists = (username: string): void => {
+const validateUsername = (username: string): void => {
   const exists = users.some((el) => {
     return el.username.toLowerCase() === username.toLowerCase();
   });
   if (exists) throw new Error('Username Taken');
+  if (!/^\w{4,12}$/.test(username)) {
+    throw new Error(
+      'Username must be between 4-12 letters and contain no special characters'
+    );
+  }
 };
 
 const addUser = (username: string, id: string): User => {
+  validateUsername(username);
   const newUser = { loggedIn: true, username, id };
   users.push(newUser);
-  console.log(users);
   return newUser;
 };
 
@@ -34,7 +35,7 @@ const getAllUsers = (): User[] => users;
 
 export default {
   addUser,
-  usernameExists,
+  validateUsername,
   removeUser,
   getUser,
   getAllUsers,

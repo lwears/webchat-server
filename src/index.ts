@@ -7,7 +7,6 @@ import http from 'http';
 import logger from './logger';
 import { ChatEvent, ChatEventClient } from './constants';
 import userService from './services/userService';
-import userRouter from './routes/users';
 
 const app = express();
 const server = http.createServer(app);
@@ -17,59 +16,84 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '../../client/build')));
-app.use('/users', userRouter);
 
 app.get('/', (_req, res) => {
   res.send('Server on');
 });
 
 io.on(ChatEvent.CONNECT, (socket) => {
-  logger.info(`user ${socket.id} connected`);
+  logger.info(`Connection opened from ${socket.id}`);
+  let inactivityTimer: NodeJS.Timeout;
+
+  const disconnectUser = (inactivity: boolean) => {
+    const user = userService.getUser(socket.id);
+    let loggerMessage = `${socket.id} disconnected`;
+    const systemMessage = {
+      author: 'System',
+      message: ``,
+    };
+    if (user) {
+      socket.leave('chat');
+      userService.removeUser(socket.id);
+      systemMessage.message = `${user.username} exited chat`;
+      loggerMessage = `${user.username} exited chat`;
+      if (inactivity) {
+        socket.emit('logout');
+        socket.emit(
+          ChatEventClient.LOGIN_FAILURE,
+          'Disconnected due to inactivity'
+        );
+        systemMessage.message = `${user.username} Disconnected due to inactivity`;
+        loggerMessage = `User ${socket.id} Disconnected due to inactivity`;
+      }
+      io.to('chat').emit(ChatEventClient.USER_LOGOUT, systemMessage);
+      const users = userService.getAllUsers();
+      io.to('chat').emit(ChatEventClient.UPDATE_USERS, users);
+    }
+    logger.info(`${loggerMessage}`);
+  };
+
+  const startInactvityTimer = (time = 900000): void => {
+    inactivityTimer = setTimeout(() => {
+      disconnectUser(true);
+    }, time);
+  };
 
   socket.on(ChatEvent.NEW_USER, (username: string) => {
     try {
-      userService.usernameExists(username);
+      // userService.validateUsername(username);
       const user = userService.addUser(username, socket.id);
       socket.emit(ChatEventClient.LOGIN_SUCCESS, user);
       logger.info(`${username} - ${socket.id} - Access Granted`);
       socket.join('chat');
-      socket.to('chat').emit(ChatEventClient.USER_CONNECTED, username);
+      const systemMessage = {
+        author: 'System',
+        message: `${username} joined the chat`,
+      };
+      socket.to('chat').emit(ChatEventClient.USER_CONNECTED, systemMessage);
+      startInactvityTimer();
       const users = userService.getAllUsers();
-      io.emit(ChatEventClient.UPDATE_USERS, users);
+      io.to('chat').emit(ChatEventClient.UPDATE_USERS, users);
     } catch (error) {
-      socket.emit(ChatEventClient.LOGIN_FAILURE, error.message);
-      logger.info(`${username} - ${socket.id} - ${error.message}`);
+      if (error instanceof Error) {
+        socket.emit(ChatEventClient.LOGIN_FAILURE, error.message);
+        logger.info(`${username} - ${socket.id} - ${error.message}`);
+      }
     }
   });
 
   socket.on(ChatEvent.MESSAGE, (message: string) => {
+    clearTimeout(inactivityTimer);
+    startInactvityTimer();
     socket.to('chat').emit(ChatEventClient.BROADCAST_MESSAGE, message);
-    console.log(message);
   });
 
   socket.on(ChatEvent.LOGOUT, () => {
-    socket.leave('chat');
-    const removedUser = userService.removeUser(socket.id);
-    const systemMessage = {
-      username: 'System',
-      message: `${removedUser.username} Exited Chat`,
-    };
-    io.to('chat').emit(ChatEventClient.USER_LOGOUT, systemMessage);
-    logger.info(`${socket.id} Logged Out`);
+    disconnectUser(false);
   });
 
   socket.on(ChatEvent.DISCONNECT, () => {
-    const user = userService.getUser(socket.id);
-    if (user) {
-      console.log('here', user.username);
-      userService.removeUser(socket.id);
-      const systemMessage = {
-        username: 'System',
-        message: `${user.username} Exited`,
-      };
-      socket.broadcast.emit(ChatEventClient.USER_DISCONNECTED, systemMessage);
-    }
-    logger.info(`${socket.id} disconnected`);
+    disconnectUser(false);
   });
 });
 
@@ -94,7 +118,8 @@ server.listen(PORT, () => {
 });
 
 const gracefulShutdown = (): void => {
-  server.close(() => {
+  logger.info(`Termination signal received, system shutdown initiated`);
+  io.close(() => {
     process.exit(0);
   });
 };
