@@ -6,6 +6,7 @@ export interface ChatMessage {
 export interface User {
   id: string;
   username: string;
+  loggedIn: boolean;
 }
 
-export type NewUser = Omit<User, 'id'>;
+export type ChatUser = Omit<User, 'loggedIn'>;

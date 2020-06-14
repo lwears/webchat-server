@@ -1,12 +1,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { BAD_REQUEST } from 'http-status-codes';
 import cors from 'cors';
-import path from 'path';
 import socketio from 'socket.io';
 import http from 'http';
 import logger from './logger';
 import { ChatEvent, ChatEventClient } from './constants';
 import userService from './services/userService';
+import { User } from './types';
 
 const app = express();
 const server = http.createServer(app);
@@ -15,10 +15,9 @@ const io = socketio(server);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, '../../client/build')));
 
 app.get('/', (_req, res) => {
-  res.send('Server on');
+  res.send('Server online');
 });
 
 io.on(ChatEvent.CONNECT, (socket) => {
@@ -61,7 +60,6 @@ io.on(ChatEvent.CONNECT, (socket) => {
 
   socket.on(ChatEvent.NEW_USER, (username: string) => {
     try {
-      // userService.validateUsername(username);
       const user = userService.addUser(username, socket.id);
       socket.emit(ChatEventClient.LOGIN_SUCCESS, user);
       logger.info(`${username} - ${socket.id} - Access Granted`);

@@ -3,7 +3,6 @@ import userService from './userService';
 describe('Testing userService functions', () => {
   const userObject = {
     id: '4',
-    loggedIn: true,
     username: 'David',
   };
 
