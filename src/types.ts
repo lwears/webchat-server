@@ -1,12 +1,10 @@
-export interface ChatMessage {
+export interface Message {
   author: string;
-  message: string;
+  content: string;
+  timeStamp: string;
 }
 
 export interface User {
   id: string;
   username: string;
-  loggedIn: boolean;
 }
-
-export type ChatUser = Omit<User, 'loggedIn'>;

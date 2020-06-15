@@ -1,6 +1,6 @@
-import { ChatUser } from '../types';
+import { User } from '../types';
 
-const users: Array<ChatUser> = [];
+const users: Array<User> = [];
 
 const validateUsername = (username: string): void => {
   const exists = users.some((el) => {
@@ -14,24 +14,23 @@ const validateUsername = (username: string): void => {
   }
 };
 
-const addUser = (username: string, id: string): ChatUser => {
+const addUser = (username: string, id: string): User => {
   validateUsername(username);
   const newUser = { username, id };
   users.push(newUser);
   return newUser;
 };
 
-const removeUser = (id: string): ChatUser => {
+const removeUser = (id: string): User => {
   const index = users.findIndex((user) => user.id === id);
   return users.splice(index, 1)[0];
 };
 
-const getUser = (id: string): ChatUser | undefined => {
-  if (users.length) return users.find((user) => user.id === id);
-  return undefined;
+const getUser = (id: string): User | undefined => {
+  return users.find((user) => user.id === id);
 };
 
-const getAllUsers = (): ChatUser[] => users;
+const getAllUsers = (): User[] => users;
 
 export default {
   addUser,

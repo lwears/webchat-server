@@ -1,12 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { BAD_REQUEST } from 'http-status-codes';
+import moment from 'moment';
 import cors from 'cors';
 import socketio from 'socket.io';
 import http from 'http';
 import logger from './logger';
 import { ChatEvent, ChatEventClient } from './constants';
 import userService from './services/userService';
-import { User } from './types';
+import { Message } from './types';
 
 const app = express();
 const server = http.createServer(app);
@@ -29,12 +30,13 @@ io.on(ChatEvent.CONNECT, (socket) => {
     let loggerMessage = `${socket.id} disconnected`;
     const systemMessage = {
       author: 'System',
-      message: ``,
+      content: ``,
+      timeStamp: moment().format('LT'),
     };
     if (user) {
       socket.leave('chat');
       userService.removeUser(socket.id);
-      systemMessage.message = `${user.username} exited chat`;
+      systemMessage.content = `${user.username} exited chat`;
       loggerMessage = `${user.username} exited chat`;
       if (inactivity) {
         socket.emit('logout');
@@ -42,7 +44,7 @@ io.on(ChatEvent.CONNECT, (socket) => {
           ChatEventClient.LOGIN_FAILURE,
           'Disconnected due to inactivity'
         );
-        systemMessage.message = `${user.username} Disconnected due to inactivity`;
+        systemMessage.content = `${user.username} Disconnected due to inactivity`;
         loggerMessage = `User ${socket.id} Disconnected due to inactivity`;
       }
       io.to('chat').emit(ChatEventClient.USER_LOGOUT, systemMessage);
@@ -66,7 +68,8 @@ io.on(ChatEvent.CONNECT, (socket) => {
       socket.join('chat');
       const systemMessage = {
         author: 'System',
-        message: `${username} joined the chat`,
+        content: `${username} joined the chat`,
+        timeStamp: moment().format('LT'),
       };
       socket.to('chat').emit(ChatEventClient.USER_CONNECTED, systemMessage);
       startInactvityTimer();
@@ -80,10 +83,17 @@ io.on(ChatEvent.CONNECT, (socket) => {
     }
   });
 
-  socket.on(ChatEvent.MESSAGE, (message: string) => {
+  socket.on(ChatEvent.MESSAGE, (text: string) => {
+    const author = userService.getUser(socket.id);
+    const message: Message = {
+      author: '',
+      content: text,
+      timeStamp: moment().format('LT'),
+    };
+    if (author) message.author = author.username;
     clearTimeout(inactivityTimer);
     startInactvityTimer();
-    socket.to('chat').emit(ChatEventClient.BROADCAST_MESSAGE, message);
+    io.to('chat').emit(ChatEventClient.BROADCAST_MESSAGE, message);
   });
 
   socket.on(ChatEvent.LOGOUT, () => {
@@ -100,6 +110,7 @@ app.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
   return res.status(BAD_REQUEST).json({
     error: err.message,
   });
+  next();
 });
 
 function normalizePort(val: string): number | string | boolean {
