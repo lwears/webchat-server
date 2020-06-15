@@ -4,7 +4,7 @@
 
 The App is deployed in two parts, The backend is deployed via Heroku, and the frontend Netlify
 
-Therefor you can app either by visiting: https://chat-room-client.netlify.app/ (keep in mind that the free heroku server might take a while to start). You can also test the app by cloning this repo and the [Frontend](https://github.com/lwears/webchat-client) repo and then run the following commands inside each repository.
+Therefor you can app either by visiting:  (keep in mind that the free heroku server might take a while to start). You can also test the app by cloning this repo and the [Frontend](https://github.com/lwears/webchat-client) repo and then run the following commands inside each repository.
 
 ## Client
 
