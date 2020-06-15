@@ -1,7 +1,5 @@
 # Chat Room Server
 
-## 🧪 Testing
-
 The App is deployed in two parts, The backend is deployed via Heroku, and the frontend Netlify
 
 You can view the live app by visiting https://lwears-chat-app.netlify.app/. 
@@ -18,7 +16,6 @@ $ npm install
 $ npm start
 ```
 
-### Linting
 - AirBnb
 
 ## Server
@@ -37,14 +34,16 @@ $ npm install
 $ npm start
 ```
 
-### Run tests
+## Linting
+
+## 🧪 Tests
 Unit Testing for UserService API with Jest
 
 ```
 $ npm test
 ```
 
-## 🧰 Functionality
+## Functionality
 
 ### Server
 
