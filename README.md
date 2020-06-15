@@ -6,7 +6,7 @@ The App is deployed in two parts, The backend is deployed via Heroku, and the fr
 
 Therefor you can app either by visiting: https://chat-room-client.netlify.app/ (keep in mind that the free heroku server might take a while to start). You can also test the app by cloning this repo and the [Frontend](https://github.com/lwears/webchat-client) repo and then run the following commands inside each repository.
 
-### Client
+## Client
 
 - TypeScript
 - ReactJS
@@ -17,10 +17,10 @@ $ npm install
 $ npm start
 ```
 
-## Linting
+### Linting
 - AirBnb
 
-### Server
+## Server
 
 - TypeScript
 - Express
