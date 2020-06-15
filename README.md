@@ -4,7 +4,8 @@
 
 The App is deployed in two parts, The backend is deployed via Heroku, and the frontend Netlify
 
-Therefor you can app either by visiting:  (keep in mind that the free heroku server might take a while to start). You can also test the app by cloning this repo and the [Frontend](https://github.com/lwears/webchat-client) repo and then run the following commands inside each repository.
+You can view the live app by visiting https://lwears-chat-app.netlify.app/. 
+You can also test the app by cloning this repo and the [Frontend](https://github.com/lwears/webchat-client) repo and then run the following commands inside each repository.
 
 ## Client
 
@@ -25,6 +26,9 @@ $ npm start
 - TypeScript
 - Express
 - NodeJS
+- Socket<span></span>.io
+- Moment
+- Winston
 
 ## To run
 
